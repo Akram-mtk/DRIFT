@@ -1,0 +1,29 @@
+# Render Blueprint — create both services from this file instead of filling in
+# the dashboard by hand. Render > New > Blueprint, point it at this repo.
+services:
+  - type: web
+    name: drift-api
+    runtime: node
+    plan: free
+    # Repo root, not apps/api: npm workspaces need the root install.
+    buildCommand: >-
+      npm ci &&
+      npx prisma generate --config apps/api/prisma.config.ts &&
+      npm run build -w api
+    preDeployCommand: npx prisma migrate deploy --config apps/api/prisma.config.ts
+    startCommand: node apps/api/dist/main
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: drift-db
+          property: connectionString
+      - key: NODE_ENV
+        value: production
+
+databases:
+  - name: drift-db
+    plan: free
+    databaseName: drift
+    # NOTE: Render deletes free Postgres instances 30 days after creation.
+    # Dump the data with pg_dump periodically; see README.

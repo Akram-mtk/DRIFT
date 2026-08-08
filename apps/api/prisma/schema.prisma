@@ -1,0 +1,74 @@
+// DRIFT — personal todo app.
+// Connection URL comes from prisma.config.ts (DATABASE_URL), not from this file.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum DayPart {
+  MORNING
+  EVENING
+  NIGHT
+}
+
+enum Urgency {
+  HIGH
+  MEDIUM
+  LOW
+  SOMEDAY
+}
+
+enum Repeat {
+  DAILY
+  WEEKLY
+}
+
+model Task {
+  id           String    @id @default(cuid())
+  title        String
+  dayPart      DayPart? // null = Anytime (whole day)
+  urgency      Urgency   @default(MEDIUM)
+  date         String? // null = Someday: floats forward until completed
+  originalDate String? // first date it was scheduled — drives "Rolled over from …"
+  carryCount   Int       @default(0)
+  completedAt  DateTime?
+  archivedAt   DateTime? // set by "drop" in the review strip
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([date])
+  @@index([archivedAt, completedAt])
+}
+
+model Routine {
+  id        String   @id @default(cuid())
+  title     String
+  dayPart   DayPart?
+  urgency   Urgency  @default(MEDIUM)
+  repeat    Repeat   @default(DAILY)
+  weekdays  Int[]    @default([0, 1, 2, 3, 4, 5, 6]) // used when WEEKLY; 0 = Sunday
+  startDate String
+  endDate   String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  completions Completion[]
+}
+
+model Completion {
+  id        String   @id @default(cuid())
+  routineId String
+  routine   Routine  @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  date      String
+  doneAt    DateTime @default(now())
+
+  @@unique([routineId, date])
+  @@index([date])
+}

@@ -1,0 +1,18 @@
+[build]
+  command = "npm run build -w web"
+  publish = "apps/web/dist"
+
+# Proxy the API through Netlify so the frontend only ever calls same-origin
+# /api/... — this is what keeps CORS out of the picture entirely.
+# Replace <render-service> with your Render web service name.
+[[redirects]]
+  from = "/api/*"
+  to = "https://<render-service>.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+# SPA fallback. Must stay AFTER the /api rule.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

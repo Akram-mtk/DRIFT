@@ -1,4 +1,16 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+  "compilerOptions": {
+    // nest-cli wipes outDir on every build, so an incremental cache can only
+    // go stale and silently skip emitting files that dist no longer has.
+    "incremental": false
+  },
+  "exclude": [
+    "node_modules",
+    "test",
+    "dist",
+    "**/*spec.ts",
+    "prisma",
+    "prisma.config.ts"
+  ]
 }
