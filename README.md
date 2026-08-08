@@ -64,21 +64,25 @@ Routine occurrences are computed on read from the schedule — only *completions
 
 ## Deploying
 
-Frontend on Netlify, API and database on Render. Netlify rewrites `/api/*` to the Render service, so the browser always talks to one origin and CORS never enters the picture.
+Frontend on Netlify, API on Render, database on Supabase. Netlify rewrites `/api/*` to the Render service, so the browser always talks to one origin and CORS never enters the picture.
 
-1. **Render** — New > Blueprint, pointed at this repo. `render.yaml` defines the web service and the free Postgres, and wires `DATABASE_URL` between them.
-2. **Netlify** — New site from this repo. `netlify.toml` has the build config; edit the `/api/*` redirect to your actual Render URL (`https://<render-service>.onrender.com`).
-3. Seed the deployed database once, from your machine, with `DATABASE_URL` pointed at Render's **external** URL: `npm run db:seed -w api`.
+1. **Supabase** — Project settings > Database > Connection string. Take the **session pooler** URI: host `...pooler.supabase.com`, port `5432`, user `postgres.<project-ref>`. Substitute your database password for `[YOUR-PASSWORD]`.
 
-### Two things about the free tier
+   Not the direct connection (`db.<ref>.supabase.co`) — that host is IPv6-only and Render has no IPv6 egress, so it cannot connect. Not the transaction pooler (port `6543`) either: `prisma migrate deploy` needs a session-mode connection.
+
+2. **Render** — New > Blueprint, pointed at this repo. `render.yaml` defines the web service; Render will prompt for `DATABASE_URL`, which is the only value it needs. Paste the URL from step 1. It is a secret, so it lives only here — never in the repo.
+
+3. **Netlify** — New site from this repo. `netlify.toml` has the build config; edit the `/api/*` redirect to your actual Render URL (`https://<render-service>.onrender.com`).
+
+Migrations run in the Render build (`prisma migrate deploy`), so a deploy is all it takes to apply a new one. To run them from your machine instead, point `DATABASE_URL` at the same URL and use `npm run db:deploy -w api`.
+
+### Two things about the free tiers
 
 **The API sleeps.** Render free web services spin down after ~15 minutes idle, so the first request after a quiet spell can take up to a minute. The frontend shows a "waking the server" notice instead of an empty list while it waits.
 
-**The database expires.** Render deletes free Postgres instances 30 days after creation, so take a dump now and then with the PostgreSQL client tools:
+**The database pauses.** Supabase pauses free projects after a stretch of inactivity; the first connection afterwards fails while it resumes. Unpause from the dashboard. Backups are worth taking anyway:
 
 ```bash
 pg_dump "$DATABASE_URL" -Fc -f drift.dump
 pg_restore -d "$DATABASE_URL" --clean --if-exists --no-owner drift.dump
 ```
-
-Rebuilding after an expiry: create a new Render Postgres, update `DATABASE_URL`, run `npm run db:deploy -w api`, then restore (or just re-seed).
