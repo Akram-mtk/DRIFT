@@ -16,6 +16,20 @@
 
 /* ---------- pills / view switcher ---------- */
 
+/* Views on the left, sync state pushed to the right. */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.topbar .pills {
+  margin-bottom: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .pills {
   display: flex;
   align-items: center;
@@ -728,6 +742,95 @@
   padding: 32px 0;
 }
 
+/* ---------- sync badge ---------- */
+
+.sync {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 7px 13px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  transition: 0.14s;
+}
+
+.sync:hover:not(:disabled) {
+  border-color: var(--border-hover);
+}
+
+.sync:disabled {
+  cursor: default;
+}
+
+.sync-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: 0 0 auto;
+}
+
+.sync-ago {
+  font-weight: 600;
+  color: var(--faint);
+}
+
+.sync--synced {
+  color: var(--green-deep);
+  background: var(--green-tint);
+  border-color: var(--green-tint-border);
+}
+
+.sync--synced .sync-ago {
+  color: var(--green);
+}
+
+.sync--syncing {
+  color: var(--urgency-medium-fg);
+  background: var(--urgency-medium-bg);
+  border-color: #f0e0b8;
+}
+
+.sync--syncing .sync-dot {
+  animation: sync-pulse 1.1s ease-in-out infinite;
+}
+
+/* Stale and offline are the same story — a saved copy, no server — so they
+   look the same. Only `error` (nothing on screen at all) reads as a fault. */
+.sync--stale,
+.sync--offline {
+  color: var(--urgency-someday-fg);
+  background: var(--urgency-someday-bg);
+  border-color: var(--border-hover);
+}
+
+.sync--error {
+  color: var(--urgency-high-fg);
+  background: var(--urgency-high-bg);
+  border-color: #f0cdb9;
+}
+
+@keyframes sync-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sync--syncing .sync-dot {
+    animation: none;
+  }
+}
+
 /* ---------- mobile: the phone mock ---------- */
 
 @media (max-width: 560px) {
@@ -756,6 +859,17 @@
 
   .pills::-webkit-scrollbar {
     display: none;
+  }
+
+  /* The edge-to-edge scroll bleed above is for a row of its own; in the
+     topbar the pills share the line with the badge and stay inside it. */
+  .topbar {
+    margin-bottom: 18px;
+  }
+
+  .topbar .pills {
+    margin: 0;
+    padding: 0 0 4px;
   }
 
   .fab {
@@ -788,5 +902,12 @@
 
   .habits {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Narrowest phones: the badge keeps its state word, drops the timestamp. */
+@media (max-width: 380px) {
+  .sync-ago {
+    display: none;
   }
 }

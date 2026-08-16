@@ -6,6 +6,7 @@ import { DayHeader } from './components/DayHeader';
 import { HabitsView } from './components/HabitsView';
 import { PlusIcon } from './components/Icons';
 import { ReviewStrip } from './components/ReviewStrip';
+import { SyncBadge } from './components/SyncBadge';
 import { TaskRow } from './components/TaskRow';
 import { ViewPills, type View } from './components/ViewPills';
 import { useDay } from './hooks/useDay';
@@ -74,9 +75,20 @@ export default function App() {
   return (
     <div className="app">
       <main className="shell">
-        <ViewPills view={view} onView={setView} />
+        <div className="topbar">
+          <ViewPills view={view} onView={setView} />
+          <SyncBadge
+            status={active.status}
+            syncedAt={active.syncedAt}
+            waking={active.waking}
+            onRetry={active.reload}
+          />
+        </div>
 
-        {active.error && (
+        {/* Only when there is nothing to show. A failed refresh on top of a
+            cached day is not worth a banner — the badge says "Not synced",
+            and the day is right there. */}
+        {active.status === 'error' && (
           <p className="notice notice--error">
             Could not reach the API — {active.error}{' '}
             <button type="button" className="link" onClick={active.reload}>
@@ -85,7 +97,7 @@ export default function App() {
           </p>
         )}
 
-        {active.waking && (
+        {active.waking && !active.data && (
           <p className="notice">
             Waking the server… the free tier sleeps after a while, so this first
             request can take up to a minute.
@@ -145,7 +157,12 @@ export default function App() {
           )
         )}
 
-        {active.loading && !active.data && <p className="notice">Loading…</p>}
+        {/* Only on a genuinely cold device — with a cached copy there is
+            already a day on screen, and the badge carries the status. The
+            waking notice above supersedes this once it appears. */}
+        {active.loading && !active.data && !active.waking && (
+          <p className="notice">Loading…</p>
+        )}
       </main>
 
       <button

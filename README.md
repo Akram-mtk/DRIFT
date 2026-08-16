@@ -78,7 +78,9 @@ Migrations run in the Render build (`prisma migrate deploy`), so a deploy is all
 
 ### Two things about the free tiers
 
-**The API sleeps.** Render free web services spin down after ~15 minutes idle, so the first request after a quiet spell can take up to a minute. The frontend shows a "waking the server" notice instead of an empty list while it waits.
+**The API sleeps.** Render free web services spin down after ~15 minutes idle, so the first request after a quiet spell can take up to a minute. The service is left to sleep — nothing pings it to keep it warm — and the frontend absorbs the wait instead: it renders from a localStorage copy of the last response (`apps/web/src/lib/cache.ts`), so the day is on screen immediately whether or not the server is up. The badge in the top-right says whether what you are looking at is live or saved.
+
+Only server-confirmed responses are cached — an optimistic edit that has not reached the API stays in memory, so a restart shows the last state the server actually acknowledged rather than a change that may never have landed. Writes still need the server; there is no offline queue yet.
 
 **The database pauses.** Supabase pauses free projects after a stretch of inactivity; the first connection afterwards fails while it resumes. Unpause from the dashboard. Backups are worth taking anyway:
 

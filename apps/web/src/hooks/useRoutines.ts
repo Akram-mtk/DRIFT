@@ -4,7 +4,9 @@ import type { CreateRoutineInput, Routine } from '../api/types';
 import { useRemote } from './useRemote';
 
 export function useRoutines(today: string) {
-  const remote = useRemote<Routine[]>(today, () => api.getRoutines(today));
+  const remote = useRemote<Routine[]>('routines', today, () =>
+    api.getRoutines(today),
+  );
   const { reload } = remote;
 
   const toggleOn = useCallback(

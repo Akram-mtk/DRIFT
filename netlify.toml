@@ -2,17 +2,7 @@
   command = "npm run build -w web"
   publish = "apps/web/dist"
 
-# Proxy the API through Netlify so the frontend only ever calls same-origin
-# /api/... — this is what keeps CORS out of the picture entirely.
-# Replace <render-service> with your Render web service name.
-[[redirects]]
-  from = "/api/*"
-  to = "https://<render-service>.onrender.com/api/:splat"
-  status = 200
-  force = true
-
-# SPA fallback. Must stay AFTER the /api rule.
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# The redirects live in apps/web/public/_redirects, not here: Vite copies that
+# file into dist/, so the rules travel with the built output and apply whether
+# the site is deployed from git or by dragging dist/ into Netlify. Rules in
+# this file would only work for the former.

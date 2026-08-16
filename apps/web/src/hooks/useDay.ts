@@ -4,7 +4,7 @@ import type { CreateTaskInput, DayFeed, FeedItem } from '../api/types';
 import { useRemote } from './useRemote';
 
 export function useDay(date: string) {
-  const remote = useRemote<DayFeed>(date, () => api.getDay(date));
+  const remote = useRemote<DayFeed>('day', date, () => api.getDay(date));
   const { data, patch, reload } = remote;
 
   /** Flip the checkbox straight away, then reconcile with the server. */
