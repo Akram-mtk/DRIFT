@@ -1,98 +1,69 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# DRIFT API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+The backend for [DRIFT](../../README.md), a personal todo app. NestJS 11 + Prisma 7 + Postgres. All routes are served under `/api`.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+For the product rules, the full route table, and deployment, see the [root README](../../README.md).
 
-## Description
+## Setup
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+From the repo root, after `npm install`:
 
 ```bash
-$ npm install
+cd apps/api
+npx prisma dev --name drift --detach     # local Postgres, no Docker needed
+cp .env.example .env                     # then set DATABASE_URL to the printed URL
+npm run db:deploy                        # apply migrations
+npm run start:dev                        # http://localhost:3000/api
 ```
 
-## Compile and run the project
+`.env` variables:
+
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `DATABASE_URL` | yes | Postgres connection string. On Supabase, use the session pooler URI (port `5432`). |
+| `PORT` | no | Defaults to `3000`. |
+
+## Scripts
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm run start:dev           # watch mode
+npm run build               # nest build -> dist/
+npm run start:prod          # node dist/main
+npm test                    # Jest unit tests (streak, rate, and schedule logic)
+npm run lint
+npm run format
+npm run db:generate         # prisma generate
+npm run db:migrate          # prisma migrate dev (creates a new migration locally)
+npm run db:deploy           # prisma migrate deploy (applies existing migrations)
+npm run db:studio           # browse the database
 ```
 
-## Run tests
+## Layout
 
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+```
+src/
+  main.ts                  bootstrap: /api prefix, validation pipe, listens on 0.0.0.0
+  app.module.ts            wires the feature modules together
+  prisma/                  PrismaService, backed by the pg adapter
+  tasks/                   task CRUD, toggle, and the review actions
+  routines/                routine CRUD, toggling a day, streak/rate/last7
+    streaks.util.ts        pure schedule and streak functions
+    streaks.util.spec.ts   tests for the above
+  day/                     GET /api/days/:date, the single call behind Today
+  health/                  GET /api/health (Render health check)
+  common/
+    date.util.ts           day arithmetic pinned to Africa/Algiers
+    types.ts               shared enums and constants
+prisma/
+  schema.prisma
+  migrations/              applied in order by migrate deploy
 ```
 
-## Deployment
+## Design notes
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- **Dates are `YYYY-MM-DD` strings.** Calendar days are never stored as timestamps. `src/common/date.util.ts` defines "today" in `Africa/Algiers`, regardless of the server's timezone.
+- **Routine occurrences are computed, not stored.** Only completions are persisted. Whether a routine applies on a given day is derived from its schedule (`startDate`, `endDate`, `repeat`, `weekdays`) at read time, so there is no cron job and no occurrence table.
+- **Streaks skip today when it is still open.** A scheduled but unchecked today does not count as a miss, so a streak doesn't read zero until you tick the box.
+- **Input is validated globally.** `ValidationPipe` runs with `whitelist` and `transform`, so unknown fields are dropped and DTOs are coerced.
+- **Migrations must be additive in production.** Migrations run in the Render build while the previous version is still serving. Add columns and tables; don't drop anything the running code reads.
+- **Binding to `0.0.0.0` is deliberate.** Render routes traffic to all interfaces, and the default bind would fail the health check.
